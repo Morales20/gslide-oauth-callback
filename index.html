@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Review Deck plugin — OAuth callback</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 640px;
+      margin: 48px auto;
+      padding: 0 16px;
+      color: #1a1a1a;
+      background: #fafafa;
+    }
+    h1 { font-size: 1.25rem; }
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85rem;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 8px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .field { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85rem; }
+    #status { color: #666; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>Review Deck plugin — Google OAuth callback</h1>
+  <p id="status">Reading response…</p>
+
+  <div class="field">
+    <label for="authCode">Authorization code (if present)</label>
+    <textarea id="authCode" readonly></textarea>
+  </div>
+
+  <div class="field">
+    <label for="accessToken">Access token (if present, from implicit/PKCE fragment)</label>
+    <textarea id="accessToken" readonly></textarea>
+  </div>
+
+  <div class="field">
+    <label for="rawParams">All returned parameters</label>
+    <textarea id="rawParams" readonly></textarea>
+  </div>
+
+  <button id="copyBtn">Copy code/token to clipboard</button>
+
+  <p style="margin-top: 32px; font-size: 0.8rem; color: #888;">
+    This is a development-only static callback page for the Review Deck Figma plugin.
+    Copy the value above and paste it back into the plugin UI to complete sign-in.
+    Nothing on this page is sent anywhere — it only reads the URL Google redirected you to.
+  </p>
+
+  <script>
+    (function () {
+      var search = new URLSearchParams(window.location.search);
+      var hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+
+      var code = search.get("code") || "";
+      var token = hash.get("access_token") || search.get("access_token") || "";
+      var error = search.get("error") || hash.get("error") || "";
+
+      var all = {};
+      search.forEach(function (v, k) { all[k] = v; });
+      hash.forEach(function (v, k) { all[k] = v; });
+
+      document.getElementById("authCode").value = code;
+      document.getElementById("accessToken").value = token;
+      document.getElementById("rawParams").value = JSON.stringify(all, null, 2);
+
+      var status = document.getElementById("status");
+      if (error) {
+        status.textContent = "Google returned an error: " + error;
+      } else if (code || token) {
+        status.textContent = "Success — copy the value below back into the plugin.";
+      } else {
+        status.textContent = "No code or token found in the redirect URL.";
+      }
+
+      document.getElementById("copyBtn").addEventListener("click", function () {
+        var value = code || token;
+        if (!value) return;
+        navigator.clipboard.writeText(value).then(function () {
+          status.textContent = "Copied to clipboard.";
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
